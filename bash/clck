@@ -1,0 +1,649 @@
+#!/bin/bash
+update_digital(){
+    CUR_COLS=-1
+    CUR_LINES=-1
+    SMALL_START_X=-1
+    SMALL_START_Y=-1
+    START_X=-1
+    START_Y=-1
+    PREV_HOUR=-1
+    PREV_MINUTE=-1
+    while [ 1 ]
+    do
+        TIME=$(timedatectl --no-pager | head -n 1\
+           | sed -E 's/.*([[:digit:]]{2}:[[:digit:]]{2}:[[:digit:]]{2}).*/\1/g')
+        HOUR[0]=$(echo $TIME | cut -d: -f1 | cut -b 1)
+        HOUR[1]=$(echo $TIME | cut -d: -f1 | cut -b 2)
+        MINUTE[0]=$(echo $TIME | cut -d: -f2 | cut -b 1)
+        MINUTE[1]=$(echo $TIME | cut -d: -f2 | cut -b 2)
+        SECOND[0]=$(echo $TIME | cut -d: -f3 | cut -b 1)
+        SECOND[1]=$(echo $TIME | cut -d: -f3 | cut -b 2)
+
+        if [ $(tput cols) != $CUR_COLS ] || [ $(tput lines) != $CUR_LINES ]
+        then
+            clear
+            tput cup 1 $(($(tput cols) / 2 - 7))
+            printf "▛▘ ▌  ▛▜ ▐▀ ▐▞"
+            tput cup 2 $(($(tput cols) / 2 - 7))
+            printf "▙▖ ▙▖ ▙▟ ▐▄ ▐▚"
+            CUR_COLS=$(tput cols)
+            CUR_LINES=$(tput lines)
+            START_X=$(($(tput cols) / 2 - 21))
+            START_Y=$(($(tput lines) / 2 - 3))
+            SMALL_START_X=$(($(tput cols) / 2 - 14))
+            SMALL_START_Y=$(($(tput lines) - 4))
+            CHANGED=2
+        else
+            CHANGED=$(($expr($PREV_HOUR != ${HOUR[1]}) +\
+                $expr($PREV_MINUTE != ${MINUTE[1]})))
+        fi
+        if [ $START_Y -le 2 ] || [ $START_X -le 0 ]
+        then
+            echo not enough space to display
+            exit
+        fi
+        PREV_HOUR=${HOUR[1]}
+        PREV_MINUTE=${MINUTE[1]}
+
+        for i in {0..4}
+        do
+            case $CHANGED in
+                2) 
+                tput smso
+                DATE=$(timedatectl --no-pager | head -n 1\
+                    | sed -E 's/.*([[:digit:]]{4}-[[:digit:]]{2}-[[:digit:]]{2}).*/\1/g')
+                YEAR[0]=$(echo $DATE | cut -d- -f1 | cut -b 1)
+                YEAR[1]=$(echo $DATE | cut -d- -f1 | cut -b 2)
+                YEAR[2]=$(echo $DATE | cut -d- -f1 | cut -b 3)
+                YEAR[3]=$(echo $DATE | cut -d- -f1 | cut -b 4)
+                MONTH[0]=$(echo $DATE | cut -d- -f2 | cut -b 1)
+                MONTH[1]=$(echo $DATE | cut -d- -f2 | cut -b 2)
+                DAY[0]=$(echo $DATE | cut -d- -f3 | cut -b 1)
+                DAY[1]=$(echo $DATE | cut -d- -f3 | cut -b 2)
+                for n in {0..2}
+                do
+                    tput cup $((SMALL_START_Y + $n)) $SMALL_START_X
+                    printf " "
+                    for m in {0..3}
+                    do
+                        case ${YEAR[$m]} in
+                            0) printf "${SMALL_ZERO[$n]} ";;
+                            1) printf "${SMALL_ONE[$n]} ";;
+                            2) printf "${SMALL_TWO[$n]} ";;
+                            3) printf "${SMALL_THREE[$n]} ";;
+                            4) printf "${SMALL_FOUR[$n]} ";;
+                            5) printf "${SMALL_FIVE[$n]} ";;
+                            6) printf "${SMALL_SIX[$n]} ";;
+                            7) printf "${SMALL_SEVEN[$n]} ";;
+                            8) printf "${SMALL_EIGHT[$n]} ";;
+                            9) printf "${SMALL_NINE[$n]} ";;
+                        esac
+                    done
+                    printf "${SMALL_SEP[$n]} "
+                    for m in {0..1}
+                    do
+                        case ${MONTH[$m]} in
+                            0) printf "${SMALL_ZERO[$n]} ";;
+                            1) printf "${SMALL_ONE[$n]} ";;
+                            2) printf "${SMALL_TWO[$n]} ";;
+                            3) printf "${SMALL_THREE[$n]} ";;
+                            4) printf "${SMALL_FOUR[$n]} ";;
+                            5) printf "${SMALL_FIVE[$n]} ";;
+                            6) printf "${SMALL_SIX[$n]} ";;
+                            7) printf "${SMALL_SEVEN[$n]} ";;
+                            8) printf "${SMALL_EIGHT[$n]} ";;
+                            9) printf "${SMALL_NINE[$n]} ";;
+                        esac
+                    done
+                    printf "${SMALL_SEP[$n]} "
+                    for m in {0..1}
+                    do
+                        case ${DAY[$m]} in
+                            0) printf "${SMALL_ZERO[$n]} ";;
+                            1) printf "${SMALL_ONE[$n]} ";;
+                            2) printf "${SMALL_TWO[$n]} ";;
+                            3) printf "${SMALL_THREE[$n]} ";;
+                            4) printf "${SMALL_FOUR[$n]} ";;
+                            5) printf "${SMALL_FIVE[$n]} ";;
+                            6) printf "${SMALL_SIX[$n]} ";;
+                            7) printf "${SMALL_SEVEN[$n]} ";;
+                            8) printf "${SMALL_EIGHT[$n]} ";;
+                            9) printf "${SMALL_NINE[$n]} ";;
+                        esac
+                    done
+                done
+                tput cup $((SMALL_START_Y + 3)) $SMALL_START_X
+                printf "▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄"
+                tput rmso 
+
+                tput cup $(($START_Y + $i)) $START_X
+                for j in {0..1}
+                do
+                    case ${HOUR[$j]} in
+                        0) printf " ${ZERO[$i]} ";;
+                        1) printf " ${ONE[$i]} ";;
+                        2) printf " ${TWO[$i]} ";;
+                        3) printf " ${THREE[$i]} ";;
+                        4) printf " ${FOUR[$i]} ";;
+                        5) printf " ${FIVE[$i]} ";;
+                        6) printf " ${SIX[$i]} ";;
+                        7) printf " ${SEVEN[$i]} ";;
+                        8) printf " ${EIGTH[$i]} ";;
+                        9) printf " ${NINE[$i]} ";;
+                    esac
+                done
+                printf "${SEP[$i]}" ;&
+                1)
+                tput cup $(($START_Y + $i)) $(($START_X + 15))
+                for j in {0..1}
+                do
+                    case ${MINUTE[$j]} in
+                        0) printf " ${ZERO[$i]} ";;
+                        1) printf " ${ONE[$i]} ";;
+                        2) printf " ${TWO[$i]} ";;
+                        3) printf " ${THREE[$i]} ";;
+                        4) printf " ${FOUR[$i]} ";;
+                        5) printf " ${FIVE[$i]} ";;
+                        6) printf " ${SIX[$i]} ";;
+                        7) printf " ${SEVEN[$i]} ";;
+                        8) printf " ${EIGTH[$i]} ";;
+                        9) printf " ${NINE[$i]} ";;
+                    esac
+                done
+                printf "${SEP[$i]}" ;&
+                0)
+                tput cup $(($START_Y + $i)) $(($START_X + 30))
+                for j in {0..1}
+                do
+                    case ${SECOND[$j]} in
+                        0) printf " ${ZERO[$i]} ";;
+                        1) printf " ${ONE[$i]} ";;
+                        2) printf " ${TWO[$i]} ";;
+                        3) printf " ${THREE[$i]} ";;
+                        4) printf " ${FOUR[$i]} ";;
+                        5) printf " ${FIVE[$i]} ";;
+                        6) printf " ${SIX[$i]} ";;
+                        7) printf " ${SEVEN[$i]} ";;
+                        8) printf " ${EIGTH[$i]} ";;
+                        9) printf " ${NINE[$i]} ";;
+                    esac
+                done ;;
+            esac
+        done
+
+        read -s -t 1 -N 1 INPUT 
+        if [ "$INPUT" = "a" ]
+        then
+            return
+        fi
+    done
+}
+
+draw_clock(){
+    clear
+    tput cup $1 $2
+    echo "                 ▗▖ ▄▄"
+    tput cup $(($1 + 1)) $2
+    echo "                 ▐▌ ▄█"
+    tput cup $(($1 + 2)) $2
+    echo "         11      ▐▌ █▄       1"
+    tput cup $(($1 + 3)) $2
+    echo "    +| | | | | | | █ | | | | | | |+"
+    tput cup $(($1 + 4)) $2
+    echo "    -                             -"
+    tput cup $(($1 + 5)) $2
+    echo "    -                             -"
+    tput cup $(($1 + 6)) $2
+    echo "  10-                             -"2
+    tput cup $(($1 + 7)) $2
+    echo "    -                             -"
+    tput cup $(($1 + 8)) $2
+    echo "    -                             -"
+    tput cup $(($1 + 9)) $2
+    echo "    -                             -"
+    tput cup $(($1 + 10)) $2
+    echo " ▄▄ -                             - ▄▄"
+    tput cup $(($1 + 11)) $2
+    echo " ▙▟ ■              +              ■ ▄█"
+    tput cup $(($1 + 12)) $2
+    echo " ▄▟ -                             - ▄█"
+    tput cup $(($1 + 13)) $2
+    echo "    -                             -"
+    tput cup $(($1 + 14)) $2
+    echo "    -                             -"
+    tput cup $(($1 + 15)) $2
+    echo "    -                             -"
+    tput cup $(($1 + 16)) $2
+    echo "   8-                             -"4
+    tput cup $(($1 + 17)) $2
+    echo "    -                             -"
+    tput cup $(($1 + 18)) $2
+    echo "    -                             -"
+    tput cup $(($1 + 19)) $2
+    echo "    +| | | | | | | █ | | | | | | |+"
+    tput cup $(($1 + 20)) $2
+    echo "         7         ▄▄        5"
+    tput cup $(($1 + 21)) $2
+    echo "                   ▙▄"
+    tput cup $(($1 + 22)) $2
+    echo "                   ▙▟"
+}
+
+update_analog(){
+    X_OFF=$(($(tput cols) / 2 - 19))
+    Y_OFF=$(($(tput lines) / 2 - 11))
+    PREV_LINES=$(tput lines)
+    PREV_COLS=$(tput cols)
+    if [ $PREV_COLS -lt 38 ] || [ $PREV_LINES -lt 25 ]
+    then
+        echo not enough space to display
+        exit
+    fi
+    H_Y=-1
+    H_X=-1
+    M_Y=-1
+    M_X=-1
+    S_Y=-1
+    S_X=-1
+    PREV_H=-1
+    PREV_M=-1
+    PREV_S=-1
+    SECOND=s
+    MINUTE=m
+    HOUR=h
+
+    tput bold
+    draw_clock $Y_OFF $X_OFF
+    tput sgr0
+    [[ $COLOR != -1 ]] && tput setaf $COLOR
+    X_OFF=$(($X_OFF + 4))
+    Y_OFF=$(($Y_OFF + 3))
+
+    while [ 1 ]
+    do
+        TIME=$(timedatectl --no-pager | head -n 1\
+           | sed -E 's/.*([[:digit:]]{2}:[[:digit:]]{2}:[[:digit:]]{2}).*/\1/g')
+
+        CUR_H=$(echo $TIME | cut -d: -f1 | sed -E 's/0?([[:digit:]]+)/\1/g')
+        CUR_M=$(echo $TIME | cut -d: -f2 | sed -E 's/0?([[:digit:]]+)/\1/g')
+        CUR_S=$(echo $TIME | cut -d: -f3 | sed -E 's/0?([[:digit:]]+)/\1/g')
+
+        if [ $(tput lines) != $PREV_LINES ] || [ $(tput cols) != $PREV_COLS ] 
+        then
+            CHANGED=3
+            X_OFF=$(($(tput cols) / 2 - 19))
+            Y_OFF=$(($(tput lines) / 2 - 11))
+            if [ $(tput cols) -lt 38 ] || [ $(tput lines) -lt 25 ]
+            then
+                echo not enough space to display
+                exit
+            fi
+            H_Y=-1
+            H_X=-1
+            M_Y=-1
+            M_X=-1
+            S_Y=-1
+            S_X=-1
+            PREV_H=-1
+            PREV_M=-1
+            PREV_S=-1
+            tput bold
+            draw_clock $Y_OFF $X_OFF
+            tput sgr0
+            [[ $COLOR != -1 ]] && tput setaf $COLOR
+            X_OFF=$(($X_OFF + 4))
+            Y_OFF=$(($Y_OFF + 3))
+        else
+            CHANGED=$(($(expr $CUR_H != $PREV_H) + $(expr $CUR_M != $PREV_M) +\
+                $(expr $CUR_S != $PREV_S)))
+        fi
+
+        case $CHANGED in
+            3)
+                if [ $H_Y != -1 ]
+                then
+                    tput cup $H_Y $H_X
+                    if [ $((PREV_H % 6)) -eq 0 ]
+                    then
+                        printf "█"
+                    elif [ $((PREV_H % 3)) -eq 0 ]
+                    then
+                        printf "■"
+                    elif [ $H_Y -eq 0 ] || [ $H_Y -eq 16 ]
+                    then
+                        printf "|"
+                    else
+                        printf "-"
+                    fi
+                fi
+                case $(($CUR_H % 12)) in
+                    0) H_Y=$Y_OFF; H_X=$(($X_OFF + 15));;
+                    1) H_Y=$Y_OFF; H_X=$(($X_OFF + 25));;
+                    2) H_Y=$(($Y_OFF + 3)); H_X=$(($X_OFF + 30));;
+                    3) H_Y=$(($Y_OFF + 8)); H_X=$(($X_OFF + 30));;
+                    4) H_Y=$(($Y_OFF + 13)); H_X=$(($X_OFF + 30));;
+                    5) H_Y=$(($Y_OFF + 16)); H_X=$(($X_OFF + 25));;
+                    6) H_Y=$(($Y_OFF + 16)); H_X=$(($X_OFF + 15));;
+                    7) H_Y=$(($Y_OFF + 16)); H_X=$(($X_OFF + 5));;
+                    8) H_Y=$(($Y_OFF + 13)); H_X=$X_OFF;;
+                    9) H_Y=$(($Y_OFF + 8)); H_X=$X_OFF;;
+                    10) H_Y=$(($Y_OFF + 3)); H_X=$X_OFF;;
+                    11) H_Y=$Y_OFF; H_X=$(($X_OFF + 5));;
+                esac 
+
+                tput setaf 1
+                tput cup $H_Y $H_X
+                printf "$HOUR"
+                tput sgr0
+                [[ $COLOR != -1 ]] && tput setaf $COLOR ;&
+            2)
+                if [ $M_Y != -1 ]
+                then
+                    tput cup $M_Y $M_X
+                    if [ $M_Y -eq $H_Y ] && [ $M_X -eq $H_X ]
+                    then
+                        tput setaf 1
+                        printf "$HOUR"
+                    elif [ $((PREV_M % 30)) -eq 0 ]
+                    then
+                        tput bold
+                        printf "█"
+                    elif [ $((PREV_M % 15)) -eq 0 ]
+                    then
+                        tput bold
+                        printf "■"
+                    elif [ $M_Y -eq $Y_OFF ] || [ $M_Y -eq $(($Y_OFF + 16)) ]
+                    then
+                        tput bold
+                        printf "|"
+                    else
+                        tput bold
+                        printf "-"
+                    fi
+                    tput sgr0
+                    [[ $COLOR != -1 ]] && tput setaf $COLOR
+                fi
+                if [ $CUR_M -gt 52 ]
+                then
+                    Y=0
+                    TMP=$(($CUR_M - 52 - 1))
+                    X=$(($TMP * 2 + 1))
+                elif [ $CUR_M -gt 37 ]
+                then
+                    X=0
+                    TMP=$(($CUR_M - 37))
+                    Y=$((16 - $TMP))
+                elif [ $CUR_M -gt 22 ]
+                then
+                    Y=16
+                    if [ $CUR_M -eq 37 ]
+                    then
+                        X=1
+                    else
+                        TMP=$(($CUR_M - 22 - 1))
+                        TMP2=$(($TMP * 2 + 1))
+                        X=$((30 - $TMP2))
+                    fi
+                elif [ $CUR_M -gt 7 ]
+                then
+                    X=30
+                    Y=$(($CUR_M - 7))
+                else
+                    Y=0
+                    X=$(($CUR_M * 2 + 15))
+                fi
+                M_Y=$(($Y + $Y_OFF))
+                M_X=$(($X + $X_OFF))
+
+                if [ $M_Y -eq $H_Y ] && [ $M_X -eq $H_X ]
+                then
+                    tput setaf 10
+                else
+                    tput setaf 2
+                fi
+                tput cup $M_Y $M_X
+                printf "$MINUTE"
+                tput sgr0
+                [[ $COLOR != -1 ]] && tput setaf $COLOR ;&
+            1)
+                if [ $S_Y != -1 ]
+                then
+                    tput cup $S_Y $S_X
+                    if [ $S_Y -eq $H_Y ] && [ $S_X -eq $H_X ] && [ $S_Y -eq $M_Y ]\
+                        && [ $S_X -eq $M_X ]
+                    then
+                        tput setaf 10
+                        printf "$HOUR"
+                    elif [ $S_Y -eq $H_Y ] && [ $S_X -eq $H_X ]
+                    then
+                        tput setaf 1
+                        printf "$HOUR"
+                    elif [ $S_Y -eq $M_Y ] && [ $S_X -eq $M_X ]
+                    then
+                        tput setaf 2
+                        printf "$MINUTE"
+                    elif [ $((PREV_S % 30)) -eq 0 ]
+                    then
+                        tput bold
+                        printf "█"
+                    elif [ $((PREV_S % 15)) -eq 0 ]
+                    then
+                        tput bold
+                        printf "■"
+                    elif [ $S_Y -eq $Y_OFF ] || [ $S_Y -eq $(($Y_OFF + 16)) ]
+                    then
+                        tput bold
+                        printf "|"
+                    else
+                        tput bold
+                        printf "-"
+                    fi 
+                    tput sgr0
+                    [[ $COLOR != -1 ]] && tput setaf $COLOR
+                fi
+                if [ $CUR_S -gt 52 ]
+                then
+                    Y=0
+                    TMP=$(($CUR_S - 52 - 1))
+                    X=$(($TMP * 2 + 1))
+                elif [ $CUR_S -gt 37 ]
+                then
+                    X=0
+                    TMP=$(($CUR_S - 37))
+                    Y=$((16 - $TMP))
+                elif [ $CUR_S -gt 22 ]
+                then
+                    Y=16
+                    if [ $CUR_S -eq 37 ]
+                    then
+                        X=1
+                    else
+                        TMP=$(($CUR_S - 22 - 1))
+                        TMP2=$(($TMP * 2 + 1))
+                        X=$((30 - $TMP2))
+                    fi
+                elif [ $CUR_S -gt 7 ]
+                then
+                    X=30
+                    Y=$(($CUR_S - 7))
+                else
+                    Y=0
+                    X=$(($CUR_S * 2 + 15))
+                fi
+                S_Y=$(($Y + $Y_OFF))
+                S_X=$(($X + $X_OFF))
+
+                if [ $S_Y -eq $H_Y ] && [ $S_X -eq $H_X ] && [ $S_Y -eq $M_Y ] \
+                    && [ $S_X -eq $M_X ]
+                then
+                    tput setaf 8
+                elif [ $S_Y -eq $H_Y ] && [ $S_X -eq $H_X ]
+                then
+                    tput setaf 13
+                elif [ $S_Y -eq $M_Y ] && [ $S_X -eq $M_X ]
+                then
+                    tput setaf 12
+                else
+                    tput setaf 4
+                fi
+                tput cup $S_Y $S_X
+                printf "$SECOND" ;;
+        esac
+
+        tput sgr0
+        [[ $COLOR != -1 ]] && tput setaf $COLOR
+
+        PREV_COLS=$(tput cols)
+        PREV_LINES=$(tput lines)
+        PREV_H=$CUR_H
+        PREV_M=$CUR_M
+        PREV_S=$CUR_S
+
+        read -s -t 1 -N 1 INPUT 
+        if [ "$INPUT" = "d" ]
+        then
+            return
+        fi
+    done
+}
+
+SEP[0]="   "
+SEP[1]=" █ "
+SEP[2]="   "
+SEP[3]=" █ "
+SEP[4]="   "
+SMALL_SEP[0]=" "
+SMALL_SEP[1]="▄"
+SMALL_SEP[2]=" "
+
+ZERO[0]="████"
+ZERO[1]="█  █"
+ZERO[2]="█  █"
+ZERO[3]="█  █"
+ZERO[4]="████"
+SMALL_ZERO[0]="▄▄"
+SMALL_ZERO[1]="▌▐"
+SMALL_ZERO[2]="▙▟"
+
+ONE[0]="  █ "
+ONE[1]="  █ "
+ONE[2]="  █ "
+ONE[3]="  █ "
+ONE[4]="  █ "
+SMALL_ONE[0]=" ▄"
+SMALL_ONE[1]=" █"
+SMALL_ONE[2]=" █"
+                
+TWO[0]="████"
+TWO[1]="   █"
+TWO[2]="████"
+TWO[3]="█   "
+TWO[4]="████"
+SMALL_TWO[0]="▄▄"
+SMALL_TWO[1]="▄█"
+SMALL_TWO[2]="█▄"
+
+THREE[0]="████"
+THREE[1]="   █"
+THREE[2]="████"
+THREE[3]="   █"
+THREE[4]="████"
+SMALL_THREE[0]="▄▄"
+SMALL_THREE[1]="▄█"
+SMALL_THREE[2]="▄█"
+
+FOUR[0]="█  █"
+FOUR[1]="█  █"
+FOUR[2]="████"
+FOUR[3]="   █"
+FOUR[4]="   █"
+SMALL_FOUR[0]="▖▗"
+SMALL_FOUR[1]="▙▟"
+SMALL_FOUR[2]=" █"
+
+FIVE[0]="████"
+FIVE[1]="█   "
+FIVE[2]="████"
+FIVE[3]="   █"
+FIVE[4]="████"
+SMALL_FIVE[0]="▄▄"
+SMALL_FIVE[1]="█▄"
+SMALL_FIVE[2]="▄█"
+
+SIX[0]="████"
+SIX[1]="█   "
+SIX[2]="████"
+SIX[3]="█  █"
+SIX[4]="████"
+SMALL_SIX[0]="▄▄"
+SMALL_SIX[1]="▙▄"
+SMALL_SIX[2]="▙▟"
+
+SEVEN[0]="████"
+SEVEN[1]="   █"
+SEVEN[2]="   █"
+SEVEN[3]="   █"
+SEVEN[4]="   █"
+SMALL_SEVEN[0]="▄▄"
+SMALL_SEVEN[1]=" █"
+SMALL_SEVEN[2]=" █"
+
+EIGTH[0]="████"
+EIGTH[1]="█  █"
+EIGTH[2]="████"
+EIGTH[3]="█  █"
+EIGTH[4]="████"
+SMALL_EIGHT[0]="▄▄"
+SMALL_EIGHT[1]="▙▟"
+SMALL_EIGHT[2]="▙▟"
+
+NINE[0]="████"
+NINE[1]="█  █"
+NINE[2]="████"
+NINE[3]="   █"
+NINE[4]="████"
+SMALL_NINE[0]="▄▄"
+SMALL_NINE[1]="▙▟"
+SMALL_NINE[2]="▄▟"
+
+COLOR=-1
+ANALOG=0
+for((i=1 ; i<=$# ; i++))
+do
+    if [ ${!i} = "-c" ]
+    then
+        let i++
+        if [ $i -le $# ] && [[ ${!i} =~ ^0$|^[1-9][0-9]*$ ]] &&\
+            [ ${!i} -le 15 ]
+        then
+            COLOR=${!i}
+        else
+            echo invalid color: ${!i}
+            sleep 2
+        fi
+    elif [ ${!i} = "-a" ]
+    then
+        ANALOG=1
+    else
+        echo unknown argument: ${!i}
+        sleep 2
+    fi
+done
+[[ $COLOR != -1 ]] && tput setaf $COLOR
+
+tput civis
+trap " tput sgr0; tput cnorm" 0
+case $ANALOG in
+    0) 
+        while [ 1 ]
+        do
+            update_digital
+            update_analog
+        done ;;
+    1) 
+        while [ 1 ]
+        do
+            update_analog
+            update_digital
+        done ;;
+esac

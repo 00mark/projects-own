@@ -1,0 +1,27 @@
+.mp3 mpv --no-terminal --input-ipc-server=/tmp/mpvsocket "%s"
+.flac mpv --no-terminal --input-ipc-server=/tmp/mpvsocket "%s"
+.mkv mpv --no-terminal --input-ipc-server=/tmp/mpvsocket "%s"
+.mp4 mpv --no-terminal --input-ipc-server=/tmp/mpvsocket "%s"
+.avi mpv --no-terminal --input-ipc-server=/tmp/mpvsocket "%s"
+.gif mpv --no-terminal --input-ipc-server=/tmp/mpvsocket "%s"
+.webm mpv --no-terminal --input-ipc-server=/tmp/mpvsocket "%s"
+.exe wine "%s" &> /dev/null
+.pdf mupdf "%s" &> /dev/null
+.epub mupdf "%s" &> /dev/null
+.cbz mupdf "%s" &> /dev/null
+.txt urxvt -e vim "%s"
+.config urxvt -e vim "%s"
+.conf urxvt -e vim "%s"
+.cnf urxvt -e vim "%s"
+.c urxvt -e vim "%s"
+.h urxvt -e vim "%s"
+.py urxvt -e vim "%s"
+.java urxvt -e vim "%s"
+.sh urxvt -e vim "%s"
+.jpg feh "%s" 0> /dev/null
+.jpeg feh "%s" 0> /dev/null
+.png feh "%s" 0> /dev/null
+.tar.gz urxvt -e tar -xvf "%s" -C "%s" &> /dev/null
+.zip urxvt -e unzip "%s" -d "%s" &> /dev/null
+elf urxvt -e vim -b "%s"
+text urxvt -e vim "%s"

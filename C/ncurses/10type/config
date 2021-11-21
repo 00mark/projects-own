@@ -1,0 +1,27 @@
+##############
+#MAIN SECTION#
+##############
+# location of the wordlist (default=$HOME/.10type/wordlists/e_mostcommon_200)
+wordlist=INSTALLDIR/wordlists/e_mostcommon_200
+# timed or consume (default=consume)
+mode=timed
+# iterative or random (default=iterative)
+advance-mode=random
+# only used in timed mode (default=60)
+time=60
+# character displayed in progress bar
+#progress_char=|
+
+###############
+#COLOR SECTION#
+###############
+# 0 <= color <= 255
+# available variables:  consume_iterative_color,  consume_random_color,
+#                       timed_iterative_color, timed_random_color,
+#                       thumb_color,
+#                       index_left_color, index_right_color,
+#                       middle_left_color, middle_right_color,
+#                       ring_left_color, ring_right_color,
+#                       little_left_color, little_right_color,
+#                       typewin_color, pausewin_color, paramwin_color, endwin_color,
+#                       num_written_color, best_wpm_color, avg_wpm_color, avg_acc_color

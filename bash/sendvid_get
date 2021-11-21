@@ -1,0 +1,43 @@
+#!/bin/bash
+
+folder_name=tmp0293485
+if [ -d "$folder_name" ]
+then
+    echo dir $folder_name exists
+    exit
+fi
+
+if [ $# -lt 1 ]
+then
+    echo not enough arguments
+    echo usage: sendvid_get sendvid_url_1 [sendvid_url_2 [...]]
+    exit
+fi
+
+for i in $@
+do
+    mkdir $folder_name
+    cd $folder_name
+    x=$(curl -s $i | grep 'og:video"' | cut -d\" -f4)
+    y=$(echo $x | cut -d/ -f1-7)
+    z=$(curl -s $(echo $x) | grep index)
+    A=$(curl -s $y/$z | grep seg)
+    m=0
+    for n in $A
+    do
+        curl -s $y/$n -o part$m &
+        echo file \'part$m\' >> file_list
+        m=$(($m + 1))
+    done
+    wait
+    f_name="$(echo $y | cut -d/ -f7)"
+    while [ -a "../$f_name" ]
+    do
+        echo $f_name already exists. Trying _$f_name
+        f_name=_$f_name
+    done
+    ffmpeg -loglevel error -f concat -safe 0 -i file_list -c copy "../$f_name"
+    cd ..
+    rm -rf $folder_name
+done
+

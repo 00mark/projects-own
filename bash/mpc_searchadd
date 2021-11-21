@@ -1,0 +1,32 @@
+#!/bin/bash
+
+search_recur()
+{
+    for n in $(ls "$1")
+    do
+        if [[ ${n,,} =~ .*${2,,}.* ]]
+        then
+            a="$1/$n"
+            mpc add ${a:$((${#dir}+1))}
+            found=1
+            echo added $n
+            return
+        elif [[ -d "$1/$n" ]]
+        then
+            search_recur "$1/$n" $2
+            [ $found = 1 ] && return
+        fi
+    done
+}
+
+IFS=$'\n'
+dir=$(cat /etc/mpd.conf | grep music_dir | cut -d\" -f2)
+if [ "${dir:0:1}" == "~" ]
+then
+    dir="$HOME${dir:1}"
+fi
+for i in $@
+do
+    found=0
+    search_recur $dir $i
+done

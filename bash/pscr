@@ -1,0 +1,157 @@
+#!/bin/bash
+update_status()
+{
+    capacity=0
+    path_capacity="power_supply/*/capacity"
+    path_red="leds/*red"
+    path_green="leds/*green"
+    path_blue="leds/*blue"
+    step=$(echo "scale=6; ($(tput cols) - 8) / 20" | bc)
+
+    while [ true ]
+    do
+        if [ -e $path/$1/$path_capacity ]
+        then
+            if [ $capacity = 0 ]
+            then
+                capacity=$(cat $path/$1/$path_capacity)
+                if [ -e $path/$1/$path_red ] && [ -e $path/$1/$path_green ] && [ -e $path/$1/$path_blue ]
+                then
+                    for((i=100 ; $i != $capacity ; i=$(($i - 5))))
+                    do
+                        red_val=$(echo "$red_val - $red_step" | bc)
+                        green_val=$(echo "$green_val - $green_step" | bc)
+                        blue_val=$(echo "$blue_val - $blue_step" | bc)
+                    done
+                    printf "%d\n" $red_val > $path/$1/$path_red/brightness 2>/dev/null
+                    printf "%d\n" $green_val > $path/$1/$path_green/brightness 2>/dev/null
+                    printf "%d\n" $blue_val > $path/$1/$path_blue/brightness 2>/dev/null
+                    printf '❲'
+                    tput setaf 2
+                    tmp1=$(echo "$capacity / 5 * $step" | bc)
+                    perl -E "print '■' x $tmp1"
+                    tput sgr0
+                    tmp2=$(($(tput cols) - 8 - $(printf "%d" $tmp1 2>/dev/null)))
+                    perl -E "print '■' x $tmp2"
+                    printf '❳'
+                    printf "(%3s%%)" "$capacity"
+                    tput cub $(tput cols)
+                fi
+            fi
+            if [ $capacity != $(cat $path/$1/$path_capacity) ]
+            then
+                diff=$((($capacity - $(cat $path/$1/$path_capacity)) / 5))
+                capacity=$(cat $path/$1/$path_capacity)
+                if [ -e $path/$1/$path_red ] && [ -e $path/$1/$path_green ] && [ -e $path/$1/$path_blue ]
+                then
+                    red_val=$(echo "$red_val - $red_step * $diff" | bc)
+                    green_val=$(echo "$green_val - $green_step * $diff" | bc)
+                    blue_val=$(echo "$blue_val - $blue_step * $diff" | bc)
+                    printf "%d\n" $red_val > $path/$1/$path_red/brightness 2>/dev/null
+                    printf "%d\n" $green_val > $path/$1/$path_green/brightness 2>/dev/null
+                    printf "%d\n" $blue_val > $path/$1/$path_blue/brightness 2>/dev/null
+                    printf '❲'
+                    tput setaf 2
+                    tmp1=$(echo "$capacity / 5 * $step" | bc)
+                    perl -E "print '■' x $tmp1"
+                    tput sgr0
+                    tmp2=$(($(tput cols) - 8 - $(printf "%d" $tmp1 2>/dev/null)))
+                    perl -E "print '■' x $tmp2"
+                    printf '❳'
+                    printf "(%3s%%)" "$capacity"
+                    tput cub $(tput cols)
+                else
+                    echo $capacity
+                fi
+            fi
+        else
+            echo [pscr] exiting...
+            return
+        fi
+        sleep 1
+    done
+}
+
+if [ $UID != 0 ]
+then
+    echo [pscr] this script has to be run as root
+    exit
+fi
+
+tput civis
+trap "tput cnorm" 0
+number_regex="^0$|^[1-9][0-9]*$"
+factor=1
+default_col=""
+random=""
+
+while [[ $# > 0 ]]
+do
+    val=$1
+    case $val in
+        -r)
+            random=1
+            shift
+            ;;
+        -f)
+            echo [pscr] using a brightness factor of $2
+            factor=$2
+            shift
+            shift
+            ;;
+        *)
+            shift
+            ;;
+    esac
+done
+
+if [[ $random ]]
+then
+    echo [pscr] using random starting values...
+    red_val=$(shuf -i 0-$((255 / $factor)) -n 1)
+    green_val=$(shuf -i 0-$((255 / $factor)) -n 1)
+    blue_val=$(shuf -i 0-$((255 / $factor)) -n 1)
+    red_step=$(echo "scale=6; $red_val / 20" | bc)
+else
+    echo [pscr] using default starting values...
+    red_val=0
+    green_val=$((255 / $factor))
+    blue_val=0
+    red_step=$(echo "scale=6; -$green_val / 20" | bc)
+fi
+green_step=$(echo "scale=6; $green_val / 20" | bc)
+blue_step=$(echo "scale=6; $blue_val / 20" | bc)
+
+# echo rval: $red_val, gval: $green_val, bval: $blue_val
+# echo rstep: $red_step, gstep: $green_step, bstep: $blue_step
+
+state=$(ps -N T  | grep '/bin/bash .*pscr.*' | cut -d' ' -f1)
+if [[ $state ]]
+then
+    echo [pscr] an instance is already running \($state\)
+    echo [pscr] kill? \(y/n\)
+    read inp
+    if [ $inp = "y" ] || [ $inp = "Y" ] || [ $inp = "yes" ] || [ $inp = "YES" ]
+    then
+        kill $state
+    else
+        echo [pscr] exiting...
+        exit
+    fi
+fi
+
+pattern=.{4}\:.{4}\:.{4}\..{4}
+path="/sys/class/bluetooth/hci0:256"
+
+if [ ! -e $path ]
+then
+    echo [pscr] no device connected
+else
+    for n in $(ls $path)
+    do
+        if [[ "$n" =~ $pattern ]]
+        then
+            update_status "$n"
+        fi
+    done
+fi

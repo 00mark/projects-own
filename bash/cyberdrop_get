@@ -1,0 +1,86 @@
+#!/bin/bash
+
+get_file()
+{
+    x=0
+    link="$1"
+    while [ $x != 4 ]
+    do
+        curl -s -O -L "$link"
+        if [ $? != 0 ]
+        then
+            case "$(echo $link | cut -d. -f1)" in
+                "https://fs-01")
+                    link="https://fs-02.""$(echo $link | cut -d. -f2-)"
+                    ;;
+                "https://fs-02")
+                    link="https://fs-03.""$(echo $link | cut -d. -f2-)"
+                    ;;
+                "https://fs-03")
+                    link="https://fs-04.""$(echo $link | cut -d. -f2-)"
+                    ;;
+                "https://fs-04")
+                    link="https://fs-01.""$(echo $link | cut -d. -f2-)"
+                    ;;
+                "https://img-01")
+                    link="https://img-02.""$(echo $link | cut -d. -f2-)"
+                    ;;
+                "https://img-02")
+                    link="https://img-03.""$(echo $link | cut -d. -f2-)"
+                    ;;
+                "https://img-03")
+                    link="https://img-04.""$(echo $link | cut -d. -f2-)"
+                    ;;
+                "https://img-04")
+                    link="https://img-01.""$(echo $link | cut -d. -f2-)"
+                    ;;
+            esac
+        else
+            flock /tmp/cdrop_info -c\
+                'y=$(cat /tmp/cdrop_info); echo $(($y + 1)) > /tmp/cdrop_info'
+            return
+        fi
+        x=$(($x + 1))
+    done
+    flock /tmp/cdrop_info -c\
+        'y=$(cat /tmp/cdrop_info); echo $(($y + 1)) > /tmp/cdrop_info'
+}
+
+if [ $# != 1 ]
+then
+    echo this script requires a cyberdrop address
+    exit
+fi
+
+IFS=$'\n'
+max_threads=25
+active_threads=0
+num=0
+n=0
+links=$(curl -s $1 | grep -oE data-src=\"[^\"]+ | cut -d\" -f2 | grep -vE\
+    thumbs\|i0\.wp | sed 's/s\///' | sed 's/ /\%20/g')
+num=$(echo $links | wc -w)
+
+echo 0 > /tmp/cdrop_info
+for i in $links
+do
+    n=$(cat /tmp/cdrop_info)
+    tput cub $(tput cols)
+    tput ech $(tput cols)
+    printf "$n/$num [$(($active_threads - $n))]" 
+    while [[ $(($active_threads - $n)) -ge $max_threads ]]
+    do
+        sleep 0.5
+        n=$(cat /tmp/cdrop_info)
+    done
+    get_file "$i" &
+    active_threads=$(($active_threads + 1))
+done
+while [ $n != $num ]
+do
+    n=$(cat /tmp/cdrop_info)
+    tput cub $(tput cols)
+    tput ech $(tput cols)
+    printf "$n/$num [$(($active_threads - $n))]" 
+    sleep 0.2
+done
